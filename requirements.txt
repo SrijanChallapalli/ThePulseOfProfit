@@ -1,3 +1,4 @@
+plotly==5.3.1  # or the latest version
 APScheduler==3.11.0
 beautifulsoup4==4.13.0
 blinker==1.9.0
