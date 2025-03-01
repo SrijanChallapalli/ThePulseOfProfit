@@ -1,0 +1,161 @@
+/* Apply Roboto Font */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap');
+
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #0a0a0a; /* Dark background */
+    color: #fff; /* White text for readability */
+}
+
+/* Header Bar Same as Homepage */
+header {
+    background-color: #0a0a0a;
+    color: #fff;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #333;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.logo {
+    font-size: 26px;
+    font-weight: bold;
+    color: #00bcd4;
+}
+
+/* Navigation */
+.nav-links {
+    display: flex;
+    gap: 20px;
+}
+
+.nav-links a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.nav-links a:hover {
+    color: #00bcd4;
+}
+
+/* Stock Container Styles */
+.stock-container {
+    width: 95%;
+    max-width: 1600px;
+    margin: 40px auto;
+    padding: 50px;
+    background-color: #1a1a1a;
+    border-radius: 10px;
+    text-align: center;
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+/* Title and Recommendation */
+.stock-container h2 {
+    font-size: 35px;
+    margin-bottom: 20px;
+    color: #00bcd4;
+}
+
+.stock-recommendation {
+    background-color: #2a2a2a;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 30px;
+    color: #00bcd4;
+    font-size: 18px;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* Chart Box Styling */
+.chart-container {
+    background-color: #1a1a1a;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    margin-bottom: 50px;
+    width: 100%;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.chart-title {
+    font-size: 28px;
+    color: #00bcd4;
+    margin-bottom: 20px;
+}
+
+/* Iframe (Graph) Width */
+iframe {
+    width: 100%;
+    height: 700px;
+    border: none;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+/* Paragraph under each chart */
+p {
+    color: #ccc;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+/* Stock Charts Section */
+.stock-charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 40px;
+}
+
+/* Color-Coding for Analysis Sentences */
+.analysis {
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.analysis.green {
+    color: green;
+}
+
+.analysis.yellow {
+    color: yellow;
+}
+
+.analysis.red {
+    color: red;
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+    .stock-charts {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-container {
+        padding: 20px;
+    }
+
+    .chart-title {
+        font-size: 24px;
+    }
+}

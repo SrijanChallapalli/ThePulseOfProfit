@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ ticker }} Stock Analysis</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stock.css') }}">
+</head>
+<body>
+
+<header>
+    <div class="header-content">
+        <div class="logo">Your Logo</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/search">Search</a>
+        </div>
+    </div>
+</header>
+
+<!-- Stock Page Content -->
+<div class="stock-container">
+    <h2>{{ ticker }} Stock Analysis</h2>
+    <p>Here is the latest data and analysis for {{ ticker }}. You can view various indicators and charts below.</p>
+
+    <div class="stock-recommendation">
+        <p>{{ recommendation }}</p>
+        <button>Buy</button>
+    </div>
+
+    <div class="stock-charts">
+        <!-- Price & Buy/Sell Signals Chart -->
+        <div class="chart-container">
+            <div class="chart-title">Price & Buy/Sell Signals</div>
+            {{ price_chart | safe }}
+            <p>Shows the closing price and buy/sell signals based on the MACD indicator. Green indicates potential buy signals, and red indicates potential sell signals.</p>
+            <p class="analysis {{ price_signal }}">{{ price_signal_text }}</p>
+        </div>
+
+        <!-- MACD & Signal Line Chart -->
+        <div class="chart-container">
+            <div class="chart-title">MACD & Signal Line</div>
+            {{ macd_chart | safe }}
+            <p>The MACD (Moving Average Convergence Divergence) line indicates momentum, while the Signal Line helps identify potential buy and sell signals.</p>
+            <p class="analysis {{ macd_signal }}">{{ macd_signal_text }}</p>
+        </div>
+
+        <!-- Ichimoku Cloud Chart -->
+        <div class="chart-container">
+            <div class="chart-title">Ichimoku Cloud</div>
+            {{ ichimoku_chart | safe }}
+            <p>The Ichimoku Cloud shows trends and provides support/resistance levels. The Senkou A and Senkou B lines create the cloud, while the Tenkan-Sen and Kijun-Sen indicate momentum.</p>
+            <p class="analysis {{ ichimoku_signal }}">{{ ichimoku_signal_text }}</p>
+        </div>
+
+        <!-- OBV Chart -->
+        <div class="chart-container">
+            <div class="chart-title">On-Balance Volume</div>
+            {{ obv_chart | safe }}
+            <p>The On-Balance Volume (OBV) indicator shows volume trends. A rising OBV suggests buying pressure, while a falling OBV suggests selling pressure.</p>
+            <p class="analysis {{ obv_signal }}">{{ obv_signal_text }}</p>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <p>Stock Analysis &copy; 2025</p>
+</footer>
+
+</body>
+</html>

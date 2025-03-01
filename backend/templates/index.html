@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ThePulseOfProfit</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <div class="logo">ThePulseOfProfit - Srijan Challapalli</div>
+            <nav class="nav-links">
+                <a href="{{ url_for('home') }}">Home</a>
+            </nav>
+            <div class="header-right">
+                <form action="{{ url_for('search') }}" method="POST">
+                    <input type="text" name="ticker" placeholder="Enter stock ticker..." class="search-bar" required />
+                    <button type="submit">Search</button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <div class="hero-section">
+            <div class="hero-left">
+                <img src="{{ url_for('static', filename='bull.jpg') }}" alt="Invest Like A Scholar" />
+            </div>
+            <div class="hero-right">
+                <h1>Invest Like A Scholar</h1>
+                <form action="{{ url_for('search') }}" method="POST">
+                    <input type="text" name="ticker" placeholder="Search stocks, politicians, and more..." class="search-bar" required />
+                    <button type="submit">Search</button>
+                </form>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
+<!-- Trending News Section at the bottom -->
+<footer>
+    <div class="trending-news">
+        <h3>🔥 Trending News</h3>
+        <div class="news-ticker">
+            <marquee behavior="scroll" direction="left" scrollamount="5">
+                {% for article in news_data %}
+                    <a href="{{ article.url }}" target="_blank" class="news-link">{{ article.title }}</a> •
+                {% endfor %}
+            </marquee>
+        </div>
+    </div>
+</footer>
+
+<form action="{{ url_for('search') }}" method="post">
+    <input type="text" name="ticker" placeholder="Enter stock symbol" required>
+    <button type="submit">Search</button>
+</form>
+
