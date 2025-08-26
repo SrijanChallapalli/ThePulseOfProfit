@@ -21,6 +21,12 @@
 <!-- Stock Page Content -->
 <div class="stock-container">
     <h2>{{ ticker }} Stock Analysis</h2>
+    {% if error %}
+    <div class="error-message">
+        <p style="color: red; font-weight: bold;">{{ error }}</p>
+    </div>
+{% endif %}
+
     <p>Here is the latest data and analysis for {{ ticker }}. You can view various indicators and charts below.</p>
 
     <div class="stock-recommendation">
