@@ -1,6 +1,6 @@
 import os
 import requests
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, redirect, url_for
 import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
@@ -43,8 +43,9 @@ def calculate_indicators(df):
     rs = gain / loss
     df["RSI"] = 100 - (100 / (1 + rs))
 
-    # OBV Calculation
-    df["Volume_Change"] = df["Volume"] * (df["Close"].diff().apply(lambda x: 1 if x > 0 else -1))
+    # OBV Calculation (fix: handle 0 changes)
+    df["Direction"] = df["Close"].diff().apply(lambda x: 1 if x > 0 else (-1 if x < 0 else 0))
+    df["Volume_Change"] = df["Volume"] * df["Direction"]
     df["OBV"] = df["Volume_Change"].cumsum()
 
     # Ichimoku Cloud
@@ -66,7 +67,8 @@ def generate_charts(ticker):
 
     ## 1️⃣ Closing Price with Buy/Sell Signals
     fig_price = go.Figure()
-    fig_price.add_trace(go.Scatter(x=df.index, y=df["Close"], mode="lines", name="Closing Price", line=dict(color="blue")))
+    fig_price.add_trace(go.Scatter(x=df.index, y=df["Close"], mode="lines",
+                                   name="Closing Price", line=dict(color="blue")))
 
     price_signal = "hold"
     if df["MACD"].iloc[-1] > df["Signal_Line"].iloc[-1]:
@@ -79,8 +81,10 @@ def generate_charts(ticker):
 
     ## 2️⃣ MACD & Signal Line
     fig_macd = go.Figure()
-    fig_macd.add_trace(go.Scatter(x=df.index, y=df["MACD"], mode="lines", name="MACD", line=dict(color="green")))
-    fig_macd.add_trace(go.Scatter(x=df.index, y=df["Signal_Line"], mode="lines", name="Signal Line", line=dict(color="red")))
+    fig_macd.add_trace(go.Scatter(x=df.index, y=df["MACD"], mode="lines",
+                                  name="MACD", line=dict(color="green")))
+    fig_macd.add_trace(go.Scatter(x=df.index, y=df["Signal_Line"], mode="lines",
+                                  name="Signal Line", line=dict(color="red")))
 
     macd_signal = "hold"
     if df["MACD"].iloc[-1] > df["Signal_Line"].iloc[-1]:
@@ -93,11 +97,16 @@ def generate_charts(ticker):
 
     ## 3️⃣ Ichimoku Cloud
     fig_ichimoku = go.Figure()
-    fig_ichimoku.add_trace(go.Scatter(x=df.index, y=df["Tenkan_Sen"], mode="lines", name="Tenkan-Sen", line=dict(color="blue")))
-    fig_ichimoku.add_trace(go.Scatter(x=df.index, y=df["Kijun_Sen"], mode="lines", name="Kijun-Sen", line=dict(color="red")))
-    fig_ichimoku.add_trace(go.Scatter(x=df.index, y=df["Senkou A"], mode="lines", name="Senkou A", line=dict(color="lightblue")))
-    fig_ichimoku.add_trace(go.Scatter(x=df.index, y=df["Senkou B"], mode="lines", name="Senkou B", line=dict(color="pink")))
-    fig_ichimoku.add_trace(go.Scatter(x=df.index, y=df["Close"].shift(-26), mode="lines", name="Chikou Span", line=dict(color="green")))
+    fig_ichimoku.add_trace(go.Scatter(x=df.index, y=df["Tenkan_Sen"], mode="lines",
+                                      name="Tenkan-Sen", line=dict(color="blue")))
+    fig_ichimoku.add_trace(go.Scatter(x=df.index, y=df["Kijun_Sen"], mode="lines",
+                                      name="Kijun-Sen", line=dict(color="red")))
+    fig_ichimoku.add_trace(go.Scatter(x=df.index, y=df["Senkou A"], mode="lines",
+                                      name="Senkou A", line=dict(color="lightblue")))
+    fig_ichimoku.add_trace(go.Scatter(x=df.index, y=df["Senkou B"], mode="lines",
+                                      name="Senkou B", line=dict(color="pink")))
+    fig_ichimoku.add_trace(go.Scatter(x=df.index, y=df["Close"].shift(-26), mode="lines",
+                                      name="Chikou Span", line=dict(color="green")))
 
     ichimoku_signal = "hold"
     if df["Tenkan_Sen"].iloc[-1] > df["Kijun_Sen"].iloc[-1]:
@@ -110,7 +119,8 @@ def generate_charts(ticker):
 
     ## 4️⃣ OBV
     fig_obv = go.Figure()
-    fig_obv.add_trace(go.Scatter(x=df.index, y=df["OBV"], mode="lines", name="OBV", line=dict(color="orange")))
+    fig_obv.add_trace(go.Scatter(x=df.index, y=df["OBV"], mode="lines",
+                                 name="OBV", line=dict(color="orange")))
 
     obv_signal = "hold"
     if df["OBV"].iloc[-1] > df["OBV"].iloc[-2]:
@@ -140,39 +150,51 @@ def generate_charts(ticker):
 def fetch_news():
     url = "https://gnews.io/api/v4/search"
     params = {
-        "q": "stock",  # You can modify the query to search for specific topics
-        "lang": "en",  # Language of the news
-        "country": "us",  # Country for the news (you can change this to any supported country)
-        "max": 10,  # Number of articles to fetch
+        "q": "stock",
+        "lang": "en",
+        "country": "us",
+        "max": 10,
         "apikey": "161d577d64c08c9c78396e820b30f83f"  # Your API key
     }
     response = requests.get(url, params=params)
 
     if response.status_code == 200:
-        return response.json()["articles"]  # Returning articles from the response
+        return response.json().get("articles", [])
     else:
         print("Failed to fetch news:", response.status_code)
-        return []  # Return an empty list if there's an error
+        return []
 
 
 @app.route("/")
 def home():
-    news_data = fetch_news()  # Fetch news data here
+    news_data = fetch_news()
     return render_template("index.html", news_data=news_data)
 
 
 @app.route("/search", methods=["POST"])
 def search():
     ticker = request.form["ticker"].upper()
-    return stock(ticker)
+    return redirect(url_for("stock", ticker=ticker))  # ✅ Redirect fixes Render issue
 
 
 @app.route("/stock/<ticker>")
 def stock(ticker):
-    price_chart, macd_chart, ichimoku_chart, obv_chart, recommendation, price_signal, macd_signal, ichimoku_signal, obv_signal = generate_charts(ticker)
+    charts = generate_charts(ticker)
+    if charts[0] is None:  # Handle invalid ticker
+        return render_template("stock.html", ticker=ticker, error="Invalid ticker symbol or no data found.")
 
-    # Pass the signals and charts to the template
-    return render_template("stock.html", ticker=ticker,
+    price_chart, macd_chart, ichimoku_chart, obv_chart, recommendation, \
+    price_signal, macd_signal, ichimoku_signal, obv_signal = charts
+
+    # Human-readable signal texts
+    signal_texts = {
+        "buy": "Bullish momentum detected (Buy Signal)",
+        "sell": "Bearish momentum detected (Sell Signal)",
+        "hold": "Neutral zone (Hold)"
+    }
+
+    return render_template("stock.html",
+                           ticker=ticker,
                            price_chart=price_chart,
                            macd_chart=macd_chart,
                            ichimoku_chart=ichimoku_chart,
@@ -181,6 +203,10 @@ def stock(ticker):
                            macd_signal=macd_signal,
                            ichimoku_signal=ichimoku_signal,
                            obv_signal=obv_signal,
+                           price_signal_text=signal_texts[price_signal],
+                           macd_signal_text=signal_texts[macd_signal],
+                           ichimoku_signal_text=signal_texts[ichimoku_signal],
+                           obv_signal_text=signal_texts[obv_signal],
                            recommendation=recommendation)
 
 
