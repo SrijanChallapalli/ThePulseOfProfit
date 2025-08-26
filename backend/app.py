@@ -4,6 +4,8 @@ from flask import Flask, request, render_template, redirect, url_for
 import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
+import datetime
+from functools import lru_cache
 
 # Initialize Flask App
 app = Flask(__name__, static_folder="static", template_folder="templates")
@@ -13,12 +15,16 @@ if not os.path.exists("static"):
     os.makedirs("static")
 
 
-def fetch_stock_data(ticker):
-    """Fetch stock data from Yahoo Finance."""
+# ==============================
+# STOCK DATA FETCHING WITH CACHE
+# ==============================
+
+@lru_cache(maxsize=50)
+def fetch_stock_data_cached(ticker, hour_key):
+    """Fetch stock data from Yahoo Finance with caching to avoid rate limits."""
     try:
         stock = yf.Ticker(ticker)
-        df = stock.history(period="6mo")  # Fetch 6 months of data
-
+        df = stock.history(period="6mo")
         if df.empty:
             return None, None
         return df, stock
@@ -26,6 +32,17 @@ def fetch_stock_data(ticker):
         print("Error fetching stock data:", e)
         return None, None
 
+
+def fetch_stock_data(ticker):
+    """Wrapper to refresh cache every hour per ticker."""
+    now = datetime.datetime.utcnow()
+    hour_key = now.strftime("%Y-%m-%d-%H")  # Refresh cache once per hour
+    return fetch_stock_data_cached(ticker, hour_key)
+
+
+# ==============================
+# INDICATORS
+# ==============================
 
 def calculate_indicators(df):
     """Calculate MACD, RSI, OBV, and Ichimoku Cloud indicators."""
@@ -43,7 +60,7 @@ def calculate_indicators(df):
     rs = gain / loss
     df["RSI"] = 100 - (100 / (1 + rs))
 
-    # OBV Calculation (fix: handle 0 changes)
+    # OBV Calculation
     df["Direction"] = df["Close"].diff().apply(lambda x: 1 if x > 0 else (-1 if x < 0 else 0))
     df["Volume_Change"] = df["Volume"] * df["Direction"]
     df["OBV"] = df["Volume_Change"].cumsum()
@@ -147,6 +164,10 @@ def generate_charts(ticker):
     return price_chart, macd_chart, ichimoku_chart, obv_chart, recommendation, price_signal, macd_signal, ichimoku_signal, obv_signal
 
 
+# ==============================
+# NEWS FETCH
+# ==============================
+
 def fetch_news():
     url = "https://gnews.io/api/v4/search"
     params = {
@@ -154,7 +175,7 @@ def fetch_news():
         "lang": "en",
         "country": "us",
         "max": 10,
-        "apikey": "161d577d64c08c9c78396e820b30f83f"  # Your API key
+        "apikey": "161d577d64c08c9c78396e820b30f83f"
     }
     response = requests.get(url, params=params)
 
@@ -165,6 +186,10 @@ def fetch_news():
         return []
 
 
+# ==============================
+# ROUTES
+# ==============================
+
 @app.route("/")
 def home():
     news_data = fetch_news()
@@ -174,14 +199,15 @@ def home():
 @app.route("/search", methods=["POST"])
 def search():
     ticker = request.form["ticker"].upper()
-    return redirect(url_for("stock", ticker=ticker))  # ✅ Redirect fixes Render issue
+    return redirect(url_for("stock", ticker=ticker))
 
 
 @app.route("/stock/<ticker>")
 def stock(ticker):
     charts = generate_charts(ticker)
-    if charts[0] is None:  # Handle invalid ticker
-        return render_template("stock.html", ticker=ticker, error="Invalid ticker symbol or no data found.")
+    if charts[0] is None:  # Handle invalid ticker or rate limit
+        return render_template("stock.html", ticker=ticker,
+                               error="⚠ Data unavailable (Invalid Ticker or Rate Limited). Try again later.")
 
     price_chart, macd_chart, ichimoku_chart, obv_chart, recommendation, \
     price_signal, macd_signal, ichimoku_signal, obv_signal = charts
